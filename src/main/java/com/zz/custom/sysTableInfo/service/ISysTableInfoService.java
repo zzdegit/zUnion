@@ -7,6 +7,8 @@ public interface ISysTableInfoService {
 
     Result saveOrUpdate(SysTableInfoPo sysTableInfoPo);
 
+    Result toSaveOrUpdatePage(SysTableInfoPo sysTableInfoPo);
+    
     Result delete(String id);
 
     Result list();

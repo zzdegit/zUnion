@@ -50,4 +50,13 @@ public class SysTableInfoServiceImpl implements ISysTableInfoService {
         return new Result(list);
     }
 
+    @Override
+    public Result toSaveOrUpdatePage(SysTableInfoPo sysTableInfoPo) {
+        SysTableInfoPo db = null;
+        if (StringUtils.isNotBlank(sysTableInfoPo.getId())) {
+            db = sysTableInfoDao.findById(sysTableInfoPo.getId());
+        }
+        return new Result(db);
+    }
+
 }

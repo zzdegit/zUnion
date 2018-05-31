@@ -12,12 +12,12 @@ import java.text.SimpleDateFormat;
 @SuppressWarnings("all")
 public class ReflectUtils {
     /**
-     * 调用obj对象的columnName 属性 的 get方法
+     * 调用obj对象的fieldName 属性 的 get方法
      */
-    public static Object invokeGet(Object obj, String columnName) {
+    public static Object invokeGet(Object obj, String fieldName) {
         Object invokeValue = null;
         try {
-            Method method = obj.getClass().getDeclaredMethod("get" + StringUtils.capitalize(columnName),null);
+            Method method = obj.getClass().getDeclaredMethod("get" + StringUtils.capitalize(fieldName), null);
             invokeValue = method.invoke(obj, null);
         } catch (Exception e) {
             e.printStackTrace();
@@ -26,15 +26,15 @@ public class ReflectUtils {
     }
 
     /**
-     * 调用obj对象的columnName 属性 的 set方法
+     * 调用obj对象的fieldName 属性 的 set方法
      */
-    public static Object invokeSet(Object obj, String columnName, Object columnValue) {
+    public static Object invokeSet(Object obj, String fieldName, Object fieldValue) {
         Object invokeValue = null;
         try {
-            if (null != columnValue) {
-                Method method = obj.getClass().getDeclaredMethod("set" + StringUtils.capitalize(columnName),
-                        columnValue.getClass());
-                invokeValue = method.invoke(obj, columnValue);
+            if (null != fieldValue) {
+                Method method = obj.getClass().getDeclaredMethod("set" + StringUtils.capitalize(fieldName),
+                        fieldValue.getClass());
+                invokeValue = method.invoke(obj, fieldValue);
             }
         } catch (Exception e) {
             e.printStackTrace();

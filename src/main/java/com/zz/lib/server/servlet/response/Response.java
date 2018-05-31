@@ -7,7 +7,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.util.Date;
-import java.util.Map;
 
 import com.alibaba.fastjson.JSON;
 import com.zz.lib.constant.Constants;
@@ -99,47 +98,32 @@ public class Response {
     }
 
     /**
-     * 关闭流
+     * 重定向
      */
-    public void close() throws IOException {
-        if (null != bw) {
-            bw.close();
+    public void redirect(String url) throws IOException {
+
+        this.createHeadInfo(302);
+
+        StringBuilder responseInfo = new StringBuilder();
+        responseInfo.append(headInfo.toString());
+        responseInfo.append("location: ").append(url).append(Constants.CRLF);
+        responseInfo.append(Constants.CRLF);
+        responseInfo.append(content.toString());
+
+        bw.append(responseInfo.toString());
+        bw.flush();
+
+        if (com.zz.lib.configuration.Configuration.getInstance().getIsDebug()) {
+            System.out.println("-----返回信息-----");
+            System.out.println(responseInfo.toString());
+            System.out.println("---------------");
         }
     }
 
     /**
      * 设置响应类型为html 使用FreeMarker技术 根据 模板文件 ftlName 以及填充参数param，获取处理后的字符串
      */
-    public void printHTML(String ftlName, Result result) throws Exception {
-        this.printHTML("src/main/resources/view", ftlName, result);
-    }
-
-    /**
-     * 设置响应类型为html
-     * 
-     * @param path
-     * @param ftlName
-     * @param param
-     * @throws Exception
-     */
-    public void printHTML(String path, String ftlName, Result result) throws Exception {
-        // 设置响应类型为html
-        this.contentType = Constants.CONTENT_TYPE.HTML;
-        // 使用FreeMarker技术 根据 模板文件 ftlName 以及填充参数param，获取处理后的字符串
-        Configuration cfg = new Configuration();
-        cfg.setDirectoryForTemplateLoading(new File(path));
-        cfg.setDefaultEncoding(Constants.UTF_8);
-
-        Template template = cfg.getTemplate(ftlName);
-        StringWriter stringWriter = new StringWriter();
-        template.process(result, stringWriter);
-        this.print(stringWriter.toString());
-    }
-
-    /**
-     * 设置响应类型为html 使用FreeMarker技术 根据 模板文件 ftlName 以及填充参数param，获取处理后的字符串
-     */
-    public void printHTML(String ftlName, Map<String, Object> param) throws Exception {
+    public void printHTML(String ftlName, Object param) throws Exception {
         this.printHTML("src/main/resources/view", ftlName, param);
     }
 
@@ -151,7 +135,7 @@ public class Response {
      * @param param
      * @throws Exception
      */
-    public void printHTML(String path, String ftlName, Map<String, Object> param) throws Exception {
+    public void printHTML(String path, String ftlName, Object param) throws Exception {
         // 设置响应类型为html
         this.contentType = Constants.CONTENT_TYPE.HTML;
         // 使用FreeMarker技术 根据 模板文件 ftlName 以及填充参数param，获取处理后的字符串
@@ -200,5 +184,14 @@ public class Response {
             contentLength += (info + Constants.CRLF).getBytes(Constants.UTF_8).length;
         }
         return this;
+    }
+
+    /**
+     * 关闭流
+     */
+    public void close() throws IOException {
+        if (null != bw) {
+            bw.close();
+        }
     }
 }

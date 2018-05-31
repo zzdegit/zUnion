@@ -1,9 +1,11 @@
 package com.zz.custom.${moduleName}.po;
 
+import com.zz.lib.spring.annotation.ZPo;
 <#list importSet as item>
 import ${item};
 </#list>
 
+@ZPo
 public class ${className} {
 
 <#list fieldList as item>

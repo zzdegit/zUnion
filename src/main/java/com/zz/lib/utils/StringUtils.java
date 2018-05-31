@@ -64,6 +64,46 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
     }
 
     /**
+     * 将java类型转换为数据库样式的名称： eg: classTeacher 变成 class_teacher
+     * 
+     * @param dbVar
+     * @return
+     */
+    public static String formatJava2VarDB(String fieldName) {
+        if (StringUtils.isNotBlank(fieldName)) {
+            char[] newStr = new char[fieldName.length() * 2];
+            int point = 0;
+            for (int i = 0; i < fieldName.length(); i++) {
+                char c = fieldName.charAt(i);
+                if (c >= 'A' && c <= 'Z') {
+                    newStr[point] = '_';
+                    point++;
+                    newStr[point] = (char) ((int) c + 32);
+                } else {
+                    newStr[point] = c;
+                }
+                point++;
+            }
+            return new String(newStr, 0, point);
+        }
+        return fieldName;
+    }
+
+    /**
+     * 将数据库样式的名称转换为java po类型： eg: class_teacher 变成 ClassTeacherPo
+     * 
+     * @param dbVar
+     * @return
+     */
+    public static String capitalizeFormatVarDB2JavaPo(String dbVar) {
+        String javaVar = formatVarDB2Java(dbVar);
+        if (StringUtils.isNotBlank(javaVar)) {
+            return StringUtils.capitalize(javaVar) + "Po";
+        }
+        return javaVar;
+    }
+
+    /**
      * url 解码
      */
     public static String decode(String value) {

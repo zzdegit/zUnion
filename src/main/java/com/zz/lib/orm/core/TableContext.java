@@ -1,11 +1,13 @@
 package com.zz.lib.orm.core;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import com.zz.lib.configuration.Configuration;
 import com.zz.lib.orm.bean.TableInfo;
 import com.zz.lib.orm.utils.JDBCUtils;
+import com.zz.lib.spring.annotation.ZPo;
+import com.zz.lib.spring.core.Container;
 import com.zz.lib.utils.StringUtils;
 
 /**
@@ -13,8 +15,7 @@ import com.zz.lib.utils.StringUtils;
  */
 public class TableContext {
     /**
-     * key:表名 
-     * value:表信息对象
+     * key:表名 value:表信息对象
      */
     private static Map<String, TableInfo> tables;
 
@@ -23,7 +24,7 @@ public class TableContext {
      */
     private static Map<Class<?>, TableInfo> poClassTableInfoMap;
 
-    static {
+    public static void init() {
         tables = new HashMap<String, TableInfo>();
         poClassTableInfoMap = new HashMap<Class<?>, TableInfo>();
         // 获取数据库表结构
@@ -37,16 +38,16 @@ public class TableContext {
     }
 
     /**
-     * 加载po包下面的类
+     * 加载po类
      */
     private static void loadPO() {
+        List<Class<?>> iocClassList = Container.getInstance().getClassListFromIOCByAnnotationClass(ZPo.class);
         for (TableInfo tableInfo : TableContext.tables.values()) {
-            try {
-                Class<?> clazz = Class.forName(Configuration.getInstance().getPoPackage() + "."
-                        + StringUtils.capitalize(tableInfo.getName()));
-                poClassTableInfoMap.put(clazz, tableInfo);
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+            for (Class<?> iocClazz : iocClassList) {
+                if (iocClazz.getSimpleName()
+                        .equals(StringUtils.capitalizeFormatVarDB2JavaPo(tableInfo.getName()))) {
+                    poClassTableInfoMap.put(iocClazz, tableInfo);
+                }
             }
         }
     }

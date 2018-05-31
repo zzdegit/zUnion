@@ -2,6 +2,9 @@ package com.zz.custom.user.po;
 
 import java.sql.Timestamp;
 
+import com.zz.lib.spring.annotation.ZPo;
+
+@ZPo
 public class User {
 
     /**

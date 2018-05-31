@@ -31,7 +31,7 @@ public class SysTableInfoDaoImpl implements ISysTableInfoDao {
 
     @Override
     public void delete(String id) {
-        query.delete(id);
+        query.delete(SysTableInfoPo.class,id);
     }
 
     @Override

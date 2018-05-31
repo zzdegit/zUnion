@@ -114,6 +114,8 @@ public class Request {
             point = 0;
         }
 
+        requestInfoSb.append("\r\n");
+
         if ("POST".equalsIgnoreCase(this.method) && (contentLength > 0)) {
             byte[] data = new byte[contentLength];
             int len = is.read(data);
@@ -130,7 +132,7 @@ public class Request {
         requestInfo = requestInfoSb.toString();
         if (com.zz.lib.configuration.Configuration.getInstance().getIsDebug()) {
             System.out.println("-----请求消息-----");
-            System.out.println(requestInfo);
+            System.out.print(requestInfo);
             System.out.println("---------------");
         }
 

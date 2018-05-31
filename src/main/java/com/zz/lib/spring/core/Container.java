@@ -1,6 +1,7 @@
 package com.zz.lib.spring.core;
 
 import java.io.File;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -23,6 +24,7 @@ import com.zz.lib.spring.annotation.ZAutowried;
 import com.zz.lib.spring.annotation.ZCompont;
 import com.zz.lib.spring.annotation.ZController;
 import com.zz.lib.spring.annotation.ZDao;
+import com.zz.lib.spring.annotation.ZPo;
 import com.zz.lib.spring.annotation.ZRequestMapping;
 import com.zz.lib.spring.annotation.ZService;
 import com.zz.lib.spring.bean.Handler;
@@ -161,7 +163,14 @@ public class Container {
                 else if (clazz.isAnnotationPresent(ZCompont.class)) {
                     ZCompont ann = clazz.getAnnotation(ZCompont.class);
                     clazzName = ann.value().trim();
-                } else {
+                }
+                // ZPo
+                else if (clazz.isAnnotationPresent(ZPo.class)) {
+                    ZPo ann = clazz.getAnnotation(ZPo.class);
+                    clazzName = ann.value().trim();
+                }
+                // 其他
+                else {
                     continue;
                 }
                 // 如果注解没有获取到自定义名字的话，就使用类名
@@ -233,4 +242,21 @@ public class Container {
         return null;
     }
 
+    /**
+     * 根据传入参数annotationClass(注解类型)，从IOC容器中获取对应的Class集合
+     */
+    public List<Class<?>> getClassListFromIOCByAnnotationClass(Class<? extends Annotation> annotationClass) {
+        List<Class<?>> classList = new ArrayList<Class<?>>();
+        if ((null == IOC) || (IOC.isEmpty())) {
+            return classList;
+        }
+        Iterator<String> it = IOC.keySet().iterator();
+        while (it.hasNext()) {
+            Class<?> clazz = IOC.get(it.next()).getClass();
+            if (clazz.isAnnotationPresent(annotationClass)) {
+                classList.add(clazz);
+            }
+        }
+        return classList;
+    }
 }

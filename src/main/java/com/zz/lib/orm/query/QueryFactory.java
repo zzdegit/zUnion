@@ -17,7 +17,9 @@ public class QueryFactory {
 
     private QueryFactory() {
         try {
-            prototype = (Query) Class.forName(Configuration.getInstance().getQueryClass()).newInstance();
+            String queryClass = Configuration.getInstance().getQueryClass();
+            Class<?> clazz = Class.forName(queryClass);
+            prototype = (Query)clazz.newInstance();
         } catch (Exception e) {
             e.printStackTrace();
         }

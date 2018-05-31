@@ -12,10 +12,10 @@ import com.zz.lib.orm.pool.DBConnectionPool;
 public class DBManager {
 
     private static DBConnectionPool DB_CONN_POOL;
-    static {
-        // 初始化TableContext
-        System.out.println(TableContext.class);
+    
+    public static void init() {
         DB_CONN_POOL = new DBConnectionPool();
+        DB_CONN_POOL.initDBPool();
     }
 
     public static Connection getConnection() {

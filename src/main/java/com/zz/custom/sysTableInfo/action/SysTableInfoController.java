@@ -20,20 +20,27 @@ public class SysTableInfoController {
     @ZRequestMapping("/saveOrUpdate")
     public void saveOrUpdate(Request request, Response response, SysTableInfoPo sysTableInfoPo)
             throws Exception {
-        Result result = sysTableInfoService.saveOrUpdate(sysTableInfoPo);
-        response.printJSON(result);
+        sysTableInfoService.saveOrUpdate(sysTableInfoPo);
+        response.redirect("/sysTableInfo/list");
+    }
+
+    @ZRequestMapping("/toSaveOrUpdatePage")
+    public void toSaveOrUpdatePage(Request request, Response response, SysTableInfoPo sysTableInfoPo)
+            throws Exception {
+        Result result = sysTableInfoService.toSaveOrUpdatePage(sysTableInfoPo);
+        response.printHTML("sysTableInfo/saveOrUpdate.ftl", result);
     }
 
     @ZRequestMapping("/delete")
     public void delete(Request request, Response response, @ZRequestParam("id") String id) throws Exception {
-        Result result = sysTableInfoService.delete(id);
-        response.printJSON(result);
+        sysTableInfoService.delete(id);
+        response.redirect("/sysTableInfo/list");
     }
 
     @ZRequestMapping("/list")
     public void list(Request request, Response response) throws Exception {
         Result result = sysTableInfoService.list();
-        response.printJSON(result);
+        response.printHTML("sysTableInfo/list.ftl", result);
     }
 
 }

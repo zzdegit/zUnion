@@ -64,11 +64,12 @@ public abstract class Query implements Cloneable, Serializable {
         for (Field field : fieldArr) {
             String fieldName = field.getName();
             Object fieldValue = ReflectUtils.invokeGet(obj, fieldName);
-            if (fieldName.equals(tableInfo.getOnlyPriKey().getName()) && (null == fieldValue)) {
+            if (fieldName.equals(tableInfo.getOnlyPriKey().getName())
+                    && (null == fieldValue || "".equals(fieldValue) || fieldValue.equals(0))) {
                 fieldValue = StringUtils.generateRandomStr();
             }
             if (null != fieldValue) {
-                sqlSb.append(fieldName + ",");
+                sqlSb.append(StringUtils.formatJava2VarDB(fieldName) + ",");
                 fieldValueList.add(fieldValue);
             }
         }
@@ -110,7 +111,8 @@ public abstract class Query implements Cloneable, Serializable {
         // 获取主键
         ColumnInfo onlyPriKey = tableInfo.getOnlyPriKey();
         // 通过反射机制，调用属性对应的get或set方法
-        Object onlyPriKeyValue = ReflectUtils.invokeGet(obj, onlyPriKey.getName());
+        Object onlyPriKeyValue = ReflectUtils.invokeGet(obj,
+                StringUtils.formatVarDB2Java(onlyPriKey.getName()));
         this.delete(clazz, onlyPriKeyValue);
     }
 
@@ -124,11 +126,11 @@ public abstract class Query implements Cloneable, Serializable {
     public int update(Object obj, String[] fieldNameArr) {
         Class<?> clazz = obj.getClass();
         TableInfo tableInfo = TableContext.getPoClassTableInfoMap().get(clazz);
-        // 如果fieldNames没有传值则默认更新所有字段
-        if ((null == fieldNameArr) || (fieldNameArr.length > 0)) {
+        // 如果fieldNameArr没有传值则默认更新所有字段
+        if ((null == fieldNameArr) || (0 == fieldNameArr.length)) {
             List<String> fieldNameList = new ArrayList<String>();
             for (ColumnInfo columnInfo : tableInfo.getColumns().values()) {
-                fieldNameList.add(columnInfo.getName());
+                fieldNameList.add(StringUtils.formatVarDB2Java(columnInfo.getName()));
             }
             fieldNameArr = fieldNameList.toArray(new String[] {});
         }
@@ -142,13 +144,13 @@ public abstract class Query implements Cloneable, Serializable {
         for (String fieldName : fieldNameArr) {
             Object fieldValue = ReflectUtils.invokeGet(obj, fieldName);
             if (!fieldName.equals(onlyPriKey.getName())) {
-                sqlSb.append(fieldName + " = ?,");
+                sqlSb.append(StringUtils.formatJava2VarDB(fieldName) + " = ?,");
                 fieldValueList.add(fieldValue);
             }
         }
         sqlSb.setCharAt(sqlSb.length() - 1, ' ');
         sqlSb.append("where " + onlyPriKey.getName() + " = ? ");
-        fieldValueList.add(ReflectUtils.invokeGet(obj, onlyPriKey.getName()));
+        fieldValueList.add(ReflectUtils.invokeGet(obj, StringUtils.formatVarDB2Java(onlyPriKey.getName())));
 
         return this.executeDML(sqlSb.toString(), fieldValueList.toArray());
     }
@@ -216,7 +218,8 @@ public abstract class Query implements Cloneable, Serializable {
                             // 获取列值
                             Object columnValue = rs.getObject(i + 1);
                             // 使用反射调用rowObj的set方法设置值
-                            ReflectUtils.invokeSet(rowObj, StringUtils.formatVarDB2Java(columnName),columnValue);
+                            ReflectUtils.invokeSet(rowObj, StringUtils.formatVarDB2Java(columnName),
+                                    columnValue);
                         }
                         queryRowList.add(rowObj);
                     }
@@ -274,7 +277,7 @@ public abstract class Query implements Cloneable, Serializable {
     public Long queryLong(String sql, Object[] params) {
         return (Long) this.queryValue(sql, params);
     }
-    
+
     /**
      * 查询返回一个Integer型数据（一行一列），并将值返回
      * 
@@ -306,7 +309,8 @@ public abstract class Query implements Cloneable, Serializable {
      */
     public Object queryPoById(Class<?> clazz, Object id) {
         TableInfo tableInfo = TableContext.getPoClassTableInfoMap().get(clazz);
-        String sql = "select *from " + tableInfo.getName() + " where " + tableInfo.getOnlyPriKey().getName() + " = ? ";
+        String sql = "select *from " + tableInfo.getName() + " where " + tableInfo.getOnlyPriKey().getName()
+                + " = ? ";
         return this.queryUniqueRow(sql, clazz, new Object[] { id });
     }
 

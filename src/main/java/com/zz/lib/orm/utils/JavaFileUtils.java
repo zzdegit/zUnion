@@ -82,34 +82,12 @@ public class JavaFileUtils {
      * 生成po
      */
     public static void createJavaPOFile(TableInfo tableInfo, TypeConvertor convertor) {
-        String tableName = StringUtils.formatVarDB2Java(tableInfo.getName());
-        String path = "src/main/java/com/zz/custom/" + tableName + "/po/" + StringUtils.capitalize(tableName)
-                + "Po.java";
+        String moduleName = StringUtils.formatVarDB2Java(tableInfo.getName());
+        String javaPoName = StringUtils.capitalizeFormatVarDB2JavaPo(tableInfo.getName());
+        String path = "src/main/java/com/zz/custom/" + moduleName + "/po/" + javaPoName + ".java";
         File file = new File(path);
         System.out.println(file.getAbsolutePath());
         String javaSrc = createJavaPO(tableInfo, convertor);
-        try {
-            FileUtils.writeStringToFile(file, javaSrc);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static String createJavaController(TableInfo tableInfo, TypeConvertor convertor) {
-
-        return null;
-    }
-
-    /**
-     * 生成controller
-     */
-    private static void createJavaControllerFile(TableInfo tableInfo, TypeConvertor convertor) {
-        String tableName = StringUtils.formatVarDB2Java(tableInfo.getName());
-        String path = "src/main/java/com/zz/custom/" + tableName + "/controller/"
-                + StringUtils.capitalize(tableName) + "Controller.java";
-        File file = new File(path);
-        System.out.println(file.getAbsolutePath());
-        String javaSrc = createJavaController(tableInfo, convertor);
         try {
             FileUtils.writeStringToFile(file, javaSrc);
         } catch (Exception e) {
@@ -123,7 +101,6 @@ public class JavaFileUtils {
     public static void createModuleByTableName(String tableName) {
         TableInfo tableInfo = JDBCUtils.getTableInfoMap().get(tableName);
         JavaFileUtils.createJavaPOFile(tableInfo, new MySqlTypeConvertor());
-        JavaFileUtils.createJavaControllerFile(tableInfo, new MySqlTypeConvertor());
     }
 
     /**
