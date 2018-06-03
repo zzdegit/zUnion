@@ -112,10 +112,14 @@ public class Configuration {
         // poolMinConnSize
         this.poolMinConnSize = pro.getInt("poolMinConnSize");
         // isDebug
-        this.isDebug = pro.getBoolean("isDebug");
-        if (null != this.isDebug) {
+
+        String isDebug = pro.getString("isDebug");
+        if (StringUtils.isBlank(isDebug)) {
             this.isDebug = true;
+        } else {
+            this.isDebug = pro.getBoolean("isDebug");
         }
+
         // timeout
         String timeout = pro.getString("timeout");
         if (StringUtils.isBlank(timeout)) {

@@ -42,7 +42,13 @@
     - @ZRequestMapping 请求映射
     - @ZRequestParam 请求参数注解
     - @ZService service
-    - @ZPo po
+    - @ZAop  
+        eg:使用@ZAop注解普通java bean、methodRegex是个正则表达式对全局所有的service的函数Method进行正则匹配，也就是调用反射获取的Method对象的toString获得的值进行正则匹配    
+        @ZAop(methodRegex="public.*saveOrUpdate\\(.*SysTableInfoPo\\)")  
+        public class LogAop implements Aop {  
+		
+        }  
+    如上的案例匹配到的完整Method是:public com.zz.lib.server.servlet.response.Result com.zz.custom.sysTableInfo.service.impl.SysTableInfoServiceImpl.saveOrUpdate(com.zz.custom.sysTableInfo.po.SysTableInfoPo)  
     
  - 4.controller的method传入参数为非po类型等javabean类需要使用注解@ZRequestParam("paramName"),PO等javabean类无需注解  
 

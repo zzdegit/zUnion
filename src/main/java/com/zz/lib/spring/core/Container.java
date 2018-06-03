@@ -4,6 +4,7 @@ import java.io.File;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import com.zz.lib.configuration.Configuration;
 import com.zz.lib.constant.Constants;
 import com.zz.lib.orm.query.Query;
 import com.zz.lib.orm.query.QueryFactory;
+import com.zz.lib.spring.annotation.ZAop;
 import com.zz.lib.spring.annotation.ZAutowried;
 import com.zz.lib.spring.annotation.ZCompont;
 import com.zz.lib.spring.annotation.ZController;
@@ -27,6 +29,8 @@ import com.zz.lib.spring.annotation.ZDao;
 import com.zz.lib.spring.annotation.ZPo;
 import com.zz.lib.spring.annotation.ZRequestMapping;
 import com.zz.lib.spring.annotation.ZService;
+import com.zz.lib.spring.aop.Aop;
+import com.zz.lib.spring.aop.AopHandler;
 import com.zz.lib.spring.bean.Handler;
 
 public class Container {
@@ -60,7 +64,7 @@ public class Container {
         // 3.实例化并初始化IOC容器
         this.initIOC();
         // 4.默认自动扫描
-        this.defaultSysIOC();
+        this.initSystemIOC();
         // 5.自动依赖注入
         this.autoAutowried();
         // 6.初始化handlerList
@@ -106,26 +110,62 @@ public class Container {
         if ((null == IOC) || (IOC.isEmpty())) {
             return;
         }
+        // 为了效率提前从容器查出所有aop
+        List<Aop> aopList = this.getObjectListFromIOCByAnnotationClass(ZAop.class);
         Iterator<String> it = IOC.keySet().iterator();
         while (it.hasNext()) {
-            // value
-            Object instance = IOC.get(it.next());
+            // 被注入的对象
+            Object passiveObject = IOC.get(it.next());
             // 获取所有的字段field 全部都注入
-            Field[] fieldArr = instance.getClass().getDeclaredFields();
-            for (Field field : fieldArr) {
-                // 只有被ZAutowried注解的才能自动注入
-                if (!field.isAnnotationPresent(ZAutowried.class)) {
-                    continue;
-                }
-                ZAutowried ann = field.getAnnotation(ZAutowried.class);
-                String className = ann.value().trim();
-                if (StringUtils.isBlank(className)) {
-                    className = field.getType().getName();
-                }
-                // 即使是private也要注入，强制授权访问
-                field.setAccessible(true);
+            Field[] passiveObjectFieldArr = passiveObject.getClass().getDeclaredFields();
+            for (Field passiveObjectField : passiveObjectFieldArr) {
                 try {
-                    field.set(instance, IOC.get(className));
+                    // 只有被ZAutowried注解的才能自动注入
+                    if (!passiveObjectField.isAnnotationPresent(ZAutowried.class)) {
+                        continue;
+                    }
+                    ZAutowried ann = passiveObjectField.getAnnotation(ZAutowried.class);
+                    String activeClassName = ann.value().trim();
+                    if (StringUtils.isBlank(activeClassName)) {
+                        activeClassName = passiveObjectField.getType().getName();
+                    }
+                    // 即使是private也要注入，强制授权访问
+                    passiveObjectField.setAccessible(true);
+
+                    Object activeObject = IOC.get(activeClassName);
+                    // 主动注入Class
+                    Class<?> activeClass = activeObject.getClass();
+                    Object autowriedObject = null;
+                    /*
+                     * 主动注入的是ZService说明，主动注入的是service 此时就需要知道其是否是被ZAop，注解的，若被注解就不能注入 真实的对象，而应该是代理对象
+                     */
+                    if (activeClass.isAnnotationPresent(ZService.class)) {
+                        // 从容器中获取所有的被ZAop注解的aop
+                        List<Aop> handleAopList = new ArrayList<Aop>();
+                        List<Method> methodList = new ArrayList<Method>();
+                        for (Aop aop : aopList) {
+                            for (Method method : activeClass.getDeclaredMethods()) {
+                                /*
+                                 * 开始进行匹配
+                                 */
+                                String methodRegex = aop.getClass().getAnnotation(ZAop.class).methodRegex();
+                                if (method.toString().matches(methodRegex)) {
+                                    handleAopList.add(aop);
+                                    methodList.add(method);
+                                }
+                            }
+                        }
+                        if ((handleAopList.size() > 0) && (methodList.size() > 0)) {
+                            AopHandler aopHandler = new AopHandler(handleAopList, activeObject, methodList);
+                            autowriedObject = Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(),
+                                    new Class[] { passiveObjectField.getType() }, aopHandler);
+                        } else {
+                            autowriedObject = activeObject;
+                        }
+                    } else {
+                        autowriedObject = activeObject;
+                    }
+                    passiveObjectField.set(passiveObject, autowriedObject);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -193,12 +233,31 @@ public class Container {
     }
 
     /**
-     * 默认即使不加@ZAutowried也会扫描进容器 自动扫描
+     * 初始化系统bean，扫描进ioc
      */
-    private void defaultSysIOC() {
-        // 查询类
+    private void initSystemIOC() {
+        if ((null == classNameList) || (classNameList.isEmpty()) || (null == IOC)) {
+            return;
+        }
+        // 1.查询类Query
         Query query = QueryFactory.getInstance().createQuery();
         IOC.put(Query.class.getName(), query);
+        // 2.Aop
+        try {
+            for (String className : classNameList) {
+                Class<?> clazz = Class.forName(className);
+                String clazzName = null;
+                // ZAop
+                if (clazz.isAnnotationPresent(ZAop.class)) {
+                    clazzName = clazz.getName();
+                    // 实例化
+                    Object instance = clazz.newInstance();
+                    IOC.put(clazzName, instance);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -258,5 +317,24 @@ public class Container {
             }
         }
         return classList;
+    }
+
+    /**
+     * 根据传入参数annotationClass(注解类型)，从IOC容器中获取对应的对象集合
+     */
+    public <T> List<T> getObjectListFromIOCByAnnotationClass(Class<? extends Annotation> annotationClass) {
+        List<T> objectList = new ArrayList<T>();
+        if ((null == IOC) || (IOC.isEmpty())) {
+            return objectList;
+        }
+        Iterator<String> it = IOC.keySet().iterator();
+        while (it.hasNext()) {
+            @SuppressWarnings("unchecked")
+            T object = (T) IOC.get(it.next());
+            if (object.getClass().isAnnotationPresent(annotationClass)) {
+                objectList.add(object);
+            }
+        }
+        return objectList;
     }
 }
